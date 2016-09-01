@@ -2,6 +2,7 @@ package astra
 
 import (
 	"testing"
+	"time"
 )
 
 func TestCameraDepth(t *testing.T) {
@@ -9,13 +10,13 @@ func TestCameraDepth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer camera.Terminate()
+	defer camera.Stop()
 
 	if err := camera.Use("device/default"); err != nil {
 		t.Fatal(err)
 	}
 
-	depth, err := NewCameraDepthStream(camera)
+	depth, err := AcquireCameraDepthStream(camera)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,6 +28,8 @@ func TestCameraDepth(t *testing.T) {
 
 	t.Logf("Depth Stream FOV: h=%f v=%f", hfov, vfov)
 
-	camera.StartStream(DefaultStreamConf)
+	go camera.StartStream(DefaultStreamConf)
+
+	<-time.After(5 * time.Second)
 
 }

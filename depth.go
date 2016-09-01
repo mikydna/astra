@@ -14,7 +14,7 @@ type CameraDepthStream struct {
 	stream *DepthStream
 }
 
-func NewCameraDepthStream(c *Camera) (*CameraDepthStream, error) {
+func AcquireCameraDepthStream(c *Camera) (*CameraDepthStream, error) {
 	if c.conn == nil || c.reader == nil {
 		return nil, ErrCameraClosed
 	}
@@ -49,9 +49,11 @@ func (ds *CameraDepthStream) Handle(frame ReaderFrame) {
 	newDepthFrame := new(DepthFrame)
 
 	frameIndex, rc := GetDepthFrame(frame, newDepthFrame)
-	if rc != StatusSuccess {
-		log.Println("ERROR", rc.Error())
-	}
+	if rc == StatusSuccess {
+		log.Printf("Process Depth Frame: index=%d", frameIndex)
 
-	log.Printf("Depth Frame: index=%d", frameIndex)
+	} else {
+		log.Printf("Skipping Frame: index=%d reasons=%s", frameIndex, rc.String())
+
+	}
 }

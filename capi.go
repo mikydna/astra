@@ -93,8 +93,18 @@ func OpenStream(deviceAddr string, conn *StreamSetConnection) Status {
 	return Status(rc)
 }
 
+func CloseStream(conn *StreamSetConnection) Status {
+	rc := C.astra_streamset_close(conn)
+	return Status(rc)
+}
+
 func CreateReader(conn StreamSetConnection, reader *Reader) Status {
 	rc := C.astra_reader_create(conn, reader)
+	return Status(rc)
+}
+
+func DestroyReader(reader *Reader) Status {
+	rc := C.astra_reader_destroy(reader)
 	return Status(rc)
 }
 

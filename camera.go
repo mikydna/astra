@@ -85,6 +85,18 @@ func (c *Camera) StartStream(conf CameraStreamConf) {
 
 }
 
-func (c *Camera) Terminate() error {
-	return Terminate().Error()
+func (c *Camera) Stop() error {
+	if rc := DestroyReader(c.reader); rc != StatusSuccess {
+		return rc.Error()
+	}
+
+	if rc := CloseStream(c.conn); rc != StatusSuccess {
+		return rc.Error()
+	}
+
+	if rc := Terminate(); rc != StatusSuccess {
+		return rc.Error()
+	}
+
+	return nil
 }
