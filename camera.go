@@ -1,14 +1,8 @@
 package astra
 
 import (
-	"errors"
 	"log"
 	"time"
-)
-
-var (
-	ErrCameraClosed              = errors.New("Camera must be openned first")
-	ErrDepthStreamAlreadyStarted = errors.New("")
 )
 
 var (
@@ -18,16 +12,21 @@ var (
 	}
 )
 
+type FrameHandler interface {
+	Handle(frame ReaderFrame)
+}
+
 type CameraStreamConf struct {
 	delay time.Duration
 	sleep time.Duration
 }
 
 type Camera struct {
-	addr   string
-	conn   *StreamSetConnection
-	reader *Reader
-	frames chan bool
+	addr     string
+	conn     *StreamSetConnection
+	reader   *Reader
+	frames   chan ReaderFrame
+	handlers []FrameHandler
 }
 
 func NewCamera() (*Camera, error) {
@@ -36,9 +35,10 @@ func NewCamera() (*Camera, error) {
 	}
 
 	return &Camera{
-		conn:   new(StreamSetConnection),
-		reader: new(Reader),
-		frames: make(chan bool),
+		conn:     new(StreamSetConnection),
+		reader:   new(Reader),
+		frames:   make(chan ReaderFrame),
+		handlers: []FrameHandler{},
 	}, nil
 }
 
@@ -57,17 +57,8 @@ func (c *Camera) Use(deviceAddr string) error {
 	return nil
 }
 
-func (c *Camera) DepthStream() (*CameraDepthStream, error) {
-	if c.conn == nil || c.reader == nil {
-		return nil, ErrCameraClosed
-	}
-
-	newDepthStream := new(DepthStream)
-	if rc := GetDepthStream(*c.reader, newDepthStream); rc != StatusSuccess {
-		return nil, rc.Error()
-	}
-
-	return &CameraDepthStream{newDepthStream}, nil
+func (c *Camera) HandleFrame(h FrameHandler) {
+	c.handlers = append(c.handlers, h)
 }
 
 func (c *Camera) StartStream(conf CameraStreamConf) {
@@ -80,9 +71,16 @@ func (c *Camera) StartStream(conf CameraStreamConf) {
 
 		newFrame := new(ReaderFrame)
 		rc := OpenReaderFrame(*c.reader, newFrame)
-		defer CloseReaderFrame(newFrame)
+		if rc != StatusSuccess {
+			continue
+		}
 
 		log.Println("Frame ", i, rc.String())
+		for _, handler := range c.handlers {
+			handler.Handle(*newFrame)
+		}
+
+		CloseReaderFrame(newFrame)
 	}
 
 }

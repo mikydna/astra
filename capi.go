@@ -68,7 +68,7 @@ type DepthStream C.astra_depthstream_t
 type HandStream C.astra_handstream_t
 
 type ReaderFrame C.astra_reader_frame_t
-type ReaderFrameIndex C.astra_frame_index_t
+type FrameIndex C.astra_frame_index_t
 
 type DepthFrame C.astra_depthframe_t
 type HandFrame C.astra_handframe_t
@@ -137,4 +137,17 @@ func GetDepthStreamFOV(depthStream DepthStream) (float32, float32, Status) {
 	}
 
 	return float32(hfov), float32(vfov), StatusSuccess
+}
+
+func GetDepthFrame(frame ReaderFrame, depthFrame *DepthFrame) (int, Status) {
+	if rc := C.astra_frame_get_depthframe(frame, depthFrame); Status(rc) != StatusSuccess {
+		return -1, Status(rc)
+	}
+
+	depthFrameIndex := new(C.astra_frame_index_t)
+	if rc := C.astra_depthframe_get_frameindex(*depthFrame, depthFrameIndex); Status(rc) != StatusSuccess {
+		return -1, Status(rc)
+	}
+
+	return int((C.int)(*depthFrameIndex)), StatusSuccess
 }

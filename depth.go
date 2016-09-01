@@ -1,7 +1,39 @@
 package astra
 
+import (
+	"errors"
+	"log"
+)
+
+var (
+	ErrCameraClosed              = errors.New("Camera must be openned first")
+	ErrDepthStreamAlreadyStarted = errors.New("")
+)
+
 type CameraDepthStream struct {
 	stream *DepthStream
+}
+
+func NewCameraDepthStream(c *Camera) (*CameraDepthStream, error) {
+	if c.conn == nil || c.reader == nil {
+		return nil, ErrCameraClosed
+	}
+
+	newDepthStream := new(DepthStream)
+
+	if rc := GetDepthStream(*c.reader, newDepthStream); rc != StatusSuccess {
+		return nil, rc.Error()
+	}
+
+	if rc := StartDepthStream(*newDepthStream); rc != StatusSuccess {
+		return nil, rc.Error()
+	}
+
+	cameraDepthStream := &CameraDepthStream{newDepthStream}
+
+	c.HandleFrame(cameraDepthStream) // weird
+
+	return cameraDepthStream, nil
 }
 
 func (ds *CameraDepthStream) GetFOV() (float32, float32, error) {
@@ -13,10 +45,13 @@ func (ds *CameraDepthStream) GetFOV() (float32, float32, error) {
 	return hfov, vfov, nil // radians
 }
 
-func (ds *CameraDepthStream) Start() error {
-	if rc := StartDepthStream(*ds.stream); rc != StatusSuccess {
-		return rc.Error()
+func (ds *CameraDepthStream) Handle(frame ReaderFrame) {
+	newDepthFrame := new(DepthFrame)
+
+	frameIndex, rc := GetDepthFrame(frame, newDepthFrame)
+	if rc != StatusSuccess {
+		log.Println("ERROR", rc.Error())
 	}
 
-	return nil
+	log.Printf("Depth Frame: index=%d", frameIndex)
 }

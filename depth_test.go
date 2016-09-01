@@ -15,7 +15,7 @@ func TestCameraDepth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	depth, err := camera.DepthStream()
+	depth, err := NewCameraDepthStream(camera)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +25,7 @@ func TestCameraDepth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("DepthStream FOV: h=%f v=%f", hfov, vfov)
+	t.Logf("Depth Stream FOV: h=%f v=%f", hfov, vfov)
 
 	camera.StartStream(DefaultStreamConf)
 
