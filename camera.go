@@ -2,6 +2,8 @@ package astra
 
 import (
 	"errors"
+	"log"
+	"time"
 )
 
 var (
@@ -9,23 +11,23 @@ var (
 	ErrDepthStreamAlreadyStarted = errors.New("")
 )
 
-type CameraDepthStream struct {
-	stream *DepthStream
-}
-
-func (ds *CameraDepthStream) GetFOV() (float32, float32, error) {
-	hfov, vfov, rc := GetDepthStreamFOV(*ds.stream)
-	if rc != StatusSuccess {
-		return -1, -1, rc.Error()
+var (
+	DefaultStreamConf = CameraStreamConf{
+		1000 * time.Millisecond,
+		100 * time.Millisecond,
 	}
+)
 
-	return hfov, vfov, nil
+type CameraStreamConf struct {
+	delay time.Duration
+	sleep time.Duration
 }
 
 type Camera struct {
 	addr   string
 	conn   *StreamSetConnection
 	reader *Reader
+	frames chan bool
 }
 
 func NewCamera() (*Camera, error) {
@@ -36,6 +38,7 @@ func NewCamera() (*Camera, error) {
 	return &Camera{
 		conn:   new(StreamSetConnection),
 		reader: new(Reader),
+		frames: make(chan bool),
 	}, nil
 }
 
@@ -54,7 +57,7 @@ func (c *Camera) Use(deviceAddr string) error {
 	return nil
 }
 
-func (c *Camera) StartDepthStream() (*CameraDepthStream, error) {
+func (c *Camera) DepthStream() (*CameraDepthStream, error) {
 	if c.conn == nil || c.reader == nil {
 		return nil, ErrCameraClosed
 	}
@@ -65,6 +68,23 @@ func (c *Camera) StartDepthStream() (*CameraDepthStream, error) {
 	}
 
 	return &CameraDepthStream{newDepthStream}, nil
+}
+
+func (c *Camera) StartStream(conf CameraStreamConf) {
+	time.Sleep(conf.delay)
+
+	for i := 0; i < 10; i++ {
+		time.Sleep(conf.sleep)
+
+		Update()
+
+		newFrame := new(ReaderFrame)
+		rc := OpenReaderFrame(*c.reader, newFrame)
+		defer CloseReaderFrame(newFrame)
+
+		log.Println("Frame ", i, rc.String())
+	}
+
 }
 
 func (c *Camera) Terminate() error {

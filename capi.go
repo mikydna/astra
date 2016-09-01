@@ -68,7 +68,7 @@ type DepthStream C.astra_depthstream_t
 type HandStream C.astra_handstream_t
 
 type ReaderFrame C.astra_reader_frame_t
-type FrameIndex C.astra_frame_index_t
+type ReaderFrameIndex C.astra_frame_index_t
 
 type DepthFrame C.astra_depthframe_t
 type HandFrame C.astra_handframe_t
@@ -77,11 +77,13 @@ type ImageMetadata C.astra_image_metadata_t
 
 func Initialize() Status {
 	rc := C.astra_initialize()
+
 	return Status(rc)
 }
 
 func Terminate() Status {
 	rc := C.astra_terminate()
+
 	return Status(rc)
 }
 
@@ -93,6 +95,28 @@ func OpenStream(deviceAddr string, conn *StreamSetConnection) Status {
 
 func CreateReader(conn StreamSetConnection, reader *Reader) Status {
 	rc := C.astra_reader_create(conn, reader)
+	return Status(rc)
+}
+
+func Update() Status {
+	rc := C.astra_temp_update()
+	return Status(rc)
+}
+
+func OpenReaderFrame(reader Reader, frame *ReaderFrame) Status {
+	rc := C.astra_reader_open_frame(reader, 0, frame)
+	return Status(rc)
+}
+
+func CloseReaderFrame(frame *ReaderFrame) Status {
+	rc := C.astra_reader_close_frame(frame)
+	return Status(rc)
+}
+
+/* depth stream */
+
+func StartDepthStream(depthStream DepthStream) Status {
+	rc := C.astra_stream_start(depthStream)
 	return Status(rc)
 }
 
