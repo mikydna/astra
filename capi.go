@@ -73,7 +73,8 @@ type FrameIndex C.astra_frame_index_t
 type DepthFrame C.astra_depthframe_t
 type HandFrame C.astra_handframe_t
 
-type ImageMetadata C.astra_image_metadata_t
+// ??
+// type ImageMetadata C.astra_image_metadata_t
 
 func Initialize() Status {
 	rc := C.astra_initialize()
@@ -160,4 +161,27 @@ func GetDepthFrame(frame ReaderFrame, depthFrame *DepthFrame) (int, Status) {
 	}
 
 	return int((C.int)(*depthFrameIndex)), StatusSuccess
+}
+
+func GetDepthFrameBuffer(depthFrame DepthFrame) ([]int16, Status) {
+	blen := new(C.size_t)
+	if rc := C.astra_depthframe_get_data_byte_length(depthFrame, blen); Status(rc) != StatusSuccess {
+		return nil, Status(rc)
+	}
+
+	buffer := make([]int16, (C.int)(*blen)/2)
+	if rc := C.astra_depthframe_copy_data(depthFrame, (*C.int16_t)(&buffer[0])); Status(rc) != StatusSuccess {
+		return nil, Status(rc)
+	}
+
+	return buffer, StatusSuccess
+}
+
+func GetDepthFrameMetadata(depthFrame DepthFrame) (uint, uint, Status) {
+	metadata := new(C.astra_image_metadata_t)
+	if rc := C.astra_depthframe_get_metadata(depthFrame, metadata); Status(rc) != StatusSuccess {
+		return 0, 0, Status(rc)
+	}
+
+	return uint((C.uint)(metadata.width)), uint((C.uint)(metadata.height)), StatusSuccess
 }

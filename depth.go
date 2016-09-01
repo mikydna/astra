@@ -10,8 +10,15 @@ var (
 	ErrDepthStreamAlreadyStarted = errors.New("")
 )
 
+type CameraDepthFrame struct {
+	index         int
+	width, height uint
+	buffer        []int16
+}
+
 type CameraDepthStream struct {
 	stream *DepthStream
+	out    chan CameraDepthFrame
 }
 
 func AcquireCameraDepthStream(c *Camera) (*CameraDepthStream, error) {
@@ -29,7 +36,10 @@ func AcquireCameraDepthStream(c *Camera) (*CameraDepthStream, error) {
 		return nil, rc.Error()
 	}
 
-	cameraDepthStream := &CameraDepthStream{newDepthStream}
+	cameraDepthStream := &CameraDepthStream{
+		stream: newDepthStream,
+		out:    make(chan CameraDepthFrame, 1),
+	}
 
 	c.HandleFrame(cameraDepthStream) // weird
 
@@ -48,12 +58,35 @@ func (ds *CameraDepthStream) GetFOV() (float32, float32, error) {
 func (ds *CameraDepthStream) Handle(frame ReaderFrame) {
 	newDepthFrame := new(DepthFrame)
 
-	frameIndex, rc := GetDepthFrame(frame, newDepthFrame)
+	index, rc := GetDepthFrame(frame, newDepthFrame)
 	if rc == StatusSuccess {
-		log.Printf("Process Depth Frame: index=%d", frameIndex)
+
+		width, height, buffer, err := processDepthFrame(*newDepthFrame)
+		if err != nil {
+			log.Println(err) // fix
+
+		} else {
+			log.Printf("Process Depth Frame: index=%d width=%d height=%d len=%d", index, width, height, len(buffer))
+			ds.out <- CameraDepthFrame{index, width, height, buffer}
+
+		}
 
 	} else {
-		log.Printf("Skipping Frame: index=%d reasons=%s", frameIndex, rc.String())
+		log.Printf("Skipping Frame: index=%d reasons=%s", index, rc.String())
 
 	}
+}
+
+func processDepthFrame(frame DepthFrame) (uint, uint, []int16, error) {
+	width, height, rc := GetDepthFrameMetadata(frame)
+	if rc != StatusSuccess {
+		return 0, 0, nil, rc.Error()
+	}
+
+	buffer, rc := GetDepthFrameBuffer(frame)
+	if rc != StatusSuccess {
+		return 0, 0, nil, rc.Error()
+	}
+
+	return width, height, buffer, nil
 }

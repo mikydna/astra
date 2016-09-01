@@ -30,6 +30,20 @@ func TestCameraDepth(t *testing.T) {
 
 	go camera.StartStream(DefaultStreamConf)
 
-	<-time.After(5 * time.Second)
+	timeout := time.After(5 * time.Second)
+	alive := true
+	heard := 0
+	for alive {
+		select {
+		case <-depth.out:
+			heard += 1
+			alive = heard <= 9
+
+		case <-timeout:
+			alive = false
+			t.Error("Did not hear all events")
+			t.Fail()
+		}
+	}
 
 }
