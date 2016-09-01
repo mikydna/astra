@@ -25,3 +25,9 @@ _testmain.go
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+
+# ORRBEC ASTRA
+astra.log
+profile_openni_sensor.txt
+profile_orbbec_hand.txt
