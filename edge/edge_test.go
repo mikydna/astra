@@ -18,14 +18,14 @@ func TestEdge(t *testing.T) {
 	go edge.Start()
 
 	timeout := time.After(5 * time.Second)
-
 	alive := true
 	for alive {
 		select {
 		case <-timeout:
 			alive = false
 		case frame := <-edge.Depth:
-			fmt.Println(frame.Index)
+			fmt.Printf("FRAME %d %d %d %d\n", frame.Index, frame.Width, frame.Height, len(frame.Buffer))
 		}
 	}
+
 }

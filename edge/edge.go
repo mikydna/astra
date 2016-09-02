@@ -8,7 +8,17 @@ import (
 	"github.com/mikydna/astra"
 )
 
+type State uint8
+
+const (
+	Initialized State = iota
+	Started
+	Stopped
+	Shutdown
+)
+
 type Edge struct {
+	state   State
 	cameras map[string]*astra.Camera
 	done    chan bool
 
@@ -23,6 +33,8 @@ func NewEdge(addrs []string) (*Edge, error) {
 			return nil, err
 		}
 
+		log.Printf("Using camera @%s", addr)
+
 		if err := camera.Use(addr); err != nil {
 			return nil, err
 		}
@@ -31,6 +43,7 @@ func NewEdge(addrs []string) (*Edge, error) {
 	}
 
 	edge := &Edge{
+		state:   Initialized,
 		cameras: cameras,
 		done:    make(chan bool),
 
@@ -41,6 +54,9 @@ func NewEdge(addrs []string) (*Edge, error) {
 }
 
 func (e *Edge) Start() error {
+	defer func() { e.state = Stopped }()
+
+	e.state = Started
 	inbound := []<-chan astra.CameraDepthFrame{}
 
 	for addr, camera := range e.cameras {
@@ -56,7 +72,6 @@ func (e *Edge) Start() error {
 
 		// trigger camera poll
 		go camera.PollStream(astra.DefaultStreamConf)
-
 	}
 
 	// single control loop for all streams
@@ -66,6 +81,8 @@ func (e *Edge) Start() error {
 		case <-e.done:
 			alive = false
 		default:
+
+			// this will jam the cpu?
 			for _, stream := range inbound {
 				select {
 				case frame := <-stream:
@@ -74,6 +91,7 @@ func (e *Edge) Start() error {
 					// nothing heard
 				}
 			}
+
 		}
 	}
 
@@ -81,8 +99,11 @@ func (e *Edge) Start() error {
 }
 
 func (e *Edge) Shutdown() {
+	defer func() { e.state = Shutdown }()
 
-	e.done <- true
+	if e.state == Started {
+		e.done <- true
+	}
 
 	for addr, camera := range e.cameras {
 		if err := camera.Stop(); err != nil {
