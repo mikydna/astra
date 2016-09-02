@@ -22,7 +22,17 @@ type CameraStreamConf struct {
 	interval time.Duration
 }
 
+type CameraState uint8
+
+const (
+	Initialized CameraState = iota
+	Active
+	Streaming
+	Stopped
+)
+
 type Camera struct {
+	state    CameraState
 	addr     string
 	conn     *StreamSetConnection
 	reader   *Reader
@@ -37,6 +47,7 @@ func NewCamera() (*Camera, error) {
 	}
 
 	return &Camera{
+		state:    Initialized,
 		conn:     nil,
 		reader:   nil,
 		frames:   make(chan ReaderFrame),
@@ -60,6 +71,8 @@ func (c *Camera) Use(deviceAddr string) error {
 		return rc.Error()
 	}
 
+	c.state = Active
+
 	return nil
 }
 
@@ -69,12 +82,14 @@ func (c *Camera) HandleFrame(h FrameHandler) {
 
 func (c *Camera) PollStream(conf CameraStreamConf) {
 	// todo: this can only be called once?
-
 	time.Sleep(conf.delay)
 
 	alive := true
 	ticker := time.NewTicker(conf.interval)
+	c.state = Streaming
+
 	for alive {
+
 		select {
 		case <-ticker.C:
 
@@ -98,7 +113,7 @@ func (c *Camera) PollStream(conf CameraStreamConf) {
 		case <-c.done:
 			ticker.Stop()
 			alive = false
-
+			c.state = Active
 		}
 	}
 }
@@ -109,7 +124,9 @@ func (c *Camera) Stop() error {
 	// must stop stream thread before destroying readers and conn
 	// fix: consider tracking state (or use a waitgroup?)
 	// - if not, camera terminate/stop can panic
-	c.done <- true
+	if c.state == Streaming {
+		c.done <- true
+	}
 
 	if rc := DestroyReader(c.reader); rc != StatusSuccess {
 		c.reader = nil
@@ -124,6 +141,8 @@ func (c *Camera) Stop() error {
 	if rc := Terminate(); rc != StatusSuccess {
 		return rc.Error()
 	}
+
+	c.state = Stopped
 
 	return nil
 }
