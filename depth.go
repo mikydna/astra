@@ -12,7 +12,7 @@ var (
 
 type CameraDepthFrame struct {
 	Index         int
-	Width, Weight uint
+	Width, Height uint
 	Buffer        []int16
 }
 

@@ -9,7 +9,7 @@ var (
 	DefaultStreamConf = CameraStreamConf{
 		1000 * time.Millisecond,
 		// ^^^ fix: initialization crutch
-		100 * time.Millisecond,
+		50 * time.Millisecond,
 	}
 )
 
