@@ -1,34 +1,30 @@
-package edge
+package astra
 
 import (
 	"log"
 )
 
-import (
-	"github.com/mikydna/astra"
-)
-
 type State uint8
 
 const (
-	Initialized State = iota
-	Started
-	Stopped
-	Shutdown
+	EdgeInitialized State = iota
+	EdgeStarted
+	EdgeStopped
+	EdgeShutdown
 )
 
 type Edge struct {
 	state   State
-	cameras map[string]*astra.Camera
+	cameras map[string]*Camera
 	done    chan bool
 
-	Depth chan astra.CameraDepthFrame
+	Depth chan CameraDepthFrame
 }
 
 func NewEdge(addrs []string) (*Edge, error) {
-	cameras := make(map[string]*astra.Camera)
+	cameras := make(map[string]*Camera)
 	for _, addr := range addrs {
-		camera, err := astra.NewCamera()
+		camera, err := NewCamera()
 		if err != nil {
 			return nil, err
 		}
@@ -43,26 +39,26 @@ func NewEdge(addrs []string) (*Edge, error) {
 	}
 
 	edge := &Edge{
-		state:   Initialized,
+		state:   EdgeInitialized,
 		cameras: cameras,
 		done:    make(chan bool),
 
-		Depth: make(chan astra.CameraDepthFrame),
+		Depth: make(chan CameraDepthFrame),
 	}
 
 	return edge, nil
 }
 
 func (e *Edge) Start() error {
-	defer func() { e.state = Stopped }()
+	defer func() { e.state = EdgeStopped }()
 
-	e.state = Started
-	inbound := []<-chan astra.CameraDepthFrame{}
+	e.state = EdgeStarted
+	inbound := []<-chan CameraDepthFrame{}
 
 	for addr, camera := range e.cameras {
 		log.Printf("Starting depth-stream for @%s", addr)
 
-		perCameraDepthStream, err := astra.AcquireCameraDepthStream(camera)
+		perCameraDepthStream, err := AcquireCameraDepthStream(camera)
 		if err != nil {
 			return err
 		}
@@ -71,7 +67,7 @@ func (e *Edge) Start() error {
 		inbound = append(inbound, perCameraDepthStream.Frames())
 
 		// trigger camera poll
-		go camera.PollStream(astra.DefaultStreamConf)
+		go camera.PollStream(DefaultStreamConf)
 	}
 
 	// single control loop for all streams
@@ -99,9 +95,9 @@ func (e *Edge) Start() error {
 }
 
 func (e *Edge) Shutdown() {
-	defer func() { e.state = Shutdown }()
+	defer func() { e.state = EdgeShutdown }()
 
-	if e.state == Started {
+	if e.state == EdgeStarted {
 		e.done <- true
 	}
 
