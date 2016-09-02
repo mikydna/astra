@@ -27,11 +27,11 @@ func TestCameraDepth(t *testing.T) {
 	}
 
 	if hfov < 0 && hfov >= 2 {
-		t.Errorf("Unexpected hfov value: hfov=%f", hfov)
+		t.Errorf("Unexpected hfov value: val=%f", hfov)
 	}
 
 	if vfov < 0 && vfov >= 2 {
-		t.Errorf("Unexpected vfov value: vfov=%f", vfov)
+		t.Errorf("Unexpected vfov value: val=%f", vfov)
 	}
 
 	go camera.PollStream(DefaultStreamConf)

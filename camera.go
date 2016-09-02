@@ -37,8 +37,8 @@ func NewCamera() (*Camera, error) {
 	}
 
 	return &Camera{
-		conn:     nil, //new(StreamSetConnection),
-		reader:   nil, //new(Reader),
+		conn:     nil,
+		reader:   nil,
 		frames:   make(chan ReaderFrame),
 		handlers: []FrameHandler{},
 		done:     make(chan bool),
