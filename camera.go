@@ -8,6 +8,7 @@ import (
 var (
 	DefaultStreamConf = CameraStreamConf{
 		1000 * time.Millisecond,
+		// ^^^ fix: initialization crutch
 		100 * time.Millisecond,
 	}
 )
@@ -17,16 +18,17 @@ type FrameHandler interface {
 }
 
 type CameraStreamConf struct {
-	delay time.Duration
-	sleep time.Duration
+	delay    time.Duration
+	interval time.Duration
 }
 
 type Camera struct {
 	addr     string
 	conn     *StreamSetConnection
 	reader   *Reader
-	frames   chan ReaderFrame
 	handlers []FrameHandler
+	frames   chan ReaderFrame
+	done     chan bool
 }
 
 func NewCamera() (*Camera, error) {
@@ -35,19 +37,23 @@ func NewCamera() (*Camera, error) {
 	}
 
 	return &Camera{
-		conn:     new(StreamSetConnection),
-		reader:   new(Reader),
+		conn:     nil, //new(StreamSetConnection),
+		reader:   nil, //new(Reader),
 		frames:   make(chan ReaderFrame),
 		handlers: []FrameHandler{},
+		done:     make(chan bool),
 	}, nil
 }
 
 func (c *Camera) Use(deviceAddr string) error {
+
+	c.conn = new(StreamSetConnection)
 	if rc := OpenStream(deviceAddr, c.conn); rc != StatusSuccess {
 		c.conn = nil
 		return rc.Error()
 	}
 
+	c.reader = new(Reader)
 	if rc := CreateReader(*c.conn, c.reader); rc != StatusSuccess {
 		c.conn = nil
 		c.reader = nil
@@ -61,36 +67,57 @@ func (c *Camera) HandleFrame(h FrameHandler) {
 	c.handlers = append(c.handlers, h)
 }
 
-func (c *Camera) StartStream(conf CameraStreamConf) {
+func (c *Camera) PollStream(conf CameraStreamConf) {
+	// todo: this can only be called once?
+
 	time.Sleep(conf.delay)
 
-	for i := 0; i < 10; i++ {
-		time.Sleep(conf.sleep)
+	alive := true
+	ticker := time.NewTicker(conf.interval)
+	for alive {
+		select {
+		case <-ticker.C:
 
-		Update()
+			if rc := Update(); rc == StatusSuccess {
+				newFrame := new(ReaderFrame)
+				rc := OpenReaderFrame(*c.reader, newFrame)
 
-		newFrame := new(ReaderFrame)
-		rc := OpenReaderFrame(*c.reader, newFrame)
-		if rc != StatusSuccess {
-			continue
+				if rc == StatusSuccess {
+					for _, handler := range c.handlers {
+						handler.Handle(*newFrame)
+					}
+
+					CloseReaderFrame(newFrame)
+				}
+
+			} else {
+				log.Println("Update failed? ", rc)
+
+			}
+
+		case <-c.done:
+			ticker.Stop()
+			alive = false
+
 		}
-
-		log.Println("Frame ", i, rc.String())
-		for _, handler := range c.handlers {
-			handler.Handle(*newFrame)
-		}
-
-		CloseReaderFrame(newFrame)
 	}
-
 }
 
 func (c *Camera) Stop() error {
+
+	// has to block; poll will most likely be executed by a goroutine
+	// must stop stream thread before destroying readers and conn
+	// fix: consider tracking state (or use a waitgroup?)
+	// - if not, camera terminate/stop can panic
+	c.done <- true
+
 	if rc := DestroyReader(c.reader); rc != StatusSuccess {
+		c.reader = nil
 		return rc.Error()
 	}
 
 	if rc := CloseStream(c.conn); rc != StatusSuccess {
+		c.conn = nil
 		return rc.Error()
 	}
 

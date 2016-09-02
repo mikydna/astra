@@ -26,22 +26,28 @@ func TestCameraDepth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("Depth Stream FOV: h=%f v=%f", hfov, vfov)
+	if hfov < 0 && hfov >= 2 {
+		t.Errorf("Unexpected hfov value: hfov=%f", hfov)
+	}
 
-	go camera.StartStream(DefaultStreamConf)
+	if vfov < 0 && vfov >= 2 {
+		t.Errorf("Unexpected vfov value: vfov=%f", vfov)
+	}
 
-	timeout := time.After(5 * time.Second)
+	go camera.PollStream(DefaultStreamConf)
+
+	timeout := time.After(10 * time.Second)
 	alive := true
 	heard := 0
 	for alive {
 		select {
-		case <-depth.out:
+		case <-depth.Frames():
 			heard += 1
-			alive = heard <= 9
+			alive = heard < 10
 
 		case <-timeout:
 			alive = false
-			t.Error("Did not hear all events")
+			t.Errorf("Did not hear at least 10 events: heard %d", heard)
 			t.Fail()
 		}
 	}

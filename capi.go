@@ -12,6 +12,7 @@ import "C"
 
 import (
 	"errors"
+	"log"
 )
 
 type Status uint8
@@ -77,6 +78,12 @@ type HandFrame C.astra_handframe_t
 // type ImageMetadata C.astra_image_metadata_t
 
 func Initialize() Status {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("fix required", err)
+		}
+	}()
+
 	rc := C.astra_initialize()
 
 	return Status(rc)

@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	ErrCameraClosed              = errors.New("Camera must be openned first")
+	ErrNoCameraInUse             = errors.New("No camera in use")
 	ErrDepthStreamAlreadyStarted = errors.New("")
 )
 
 type CameraDepthFrame struct {
-	index         int
-	width, height uint
-	buffer        []int16
+	Index         int
+	Width, Weight uint
+	Buffer        []int16
 }
 
 type CameraDepthStream struct {
@@ -23,7 +23,7 @@ type CameraDepthStream struct {
 
 func AcquireCameraDepthStream(c *Camera) (*CameraDepthStream, error) {
 	if c.conn == nil || c.reader == nil {
-		return nil, ErrCameraClosed
+		return nil, ErrNoCameraInUse
 	}
 
 	newDepthStream := new(DepthStream)
@@ -61,12 +61,10 @@ func (ds *CameraDepthStream) Handle(frame ReaderFrame) {
 	index, rc := GetDepthFrame(frame, newDepthFrame)
 	if rc == StatusSuccess {
 
-		width, height, buffer, err := processDepthFrame(*newDepthFrame)
-		if err != nil {
+		if width, height, buffer, err := processDepthFrame(*newDepthFrame); err != nil {
 			log.Println(err) // fix
 
 		} else {
-			log.Printf("Process Depth Frame: index=%d width=%d height=%d len=%d", index, width, height, len(buffer))
 			ds.out <- CameraDepthFrame{index, width, height, buffer}
 
 		}
@@ -75,6 +73,10 @@ func (ds *CameraDepthStream) Handle(frame ReaderFrame) {
 		log.Printf("Skipping Frame: index=%d reasons=%s", index, rc.String())
 
 	}
+}
+
+func (ds *CameraDepthStream) Frames() <-chan CameraDepthFrame {
+	return ds.out
 }
 
 func processDepthFrame(frame DepthFrame) (uint, uint, []int16, error) {
