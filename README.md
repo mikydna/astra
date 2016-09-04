@@ -1,2 +1,2 @@
 
-`go run cmd/astra-standalone.go'
+`go run cmd/astra-standalone.go`
