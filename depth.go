@@ -12,7 +12,7 @@ var (
 
 type CameraDepthFrame struct {
 	Index         int
-	Width, Height uint
+	Width, Height int
 	Buffer        []int16
 }
 
@@ -79,7 +79,7 @@ func (ds *CameraDepthStream) Frames() <-chan CameraDepthFrame {
 	return ds.out
 }
 
-func processDepthFrame(frame DepthFrame) (uint, uint, []int16, error) {
+func processDepthFrame(frame DepthFrame) (int, int, []int16, error) {
 	width, height, rc := GetDepthFrameMetadata(frame)
 	if rc != StatusSuccess {
 		return 0, 0, nil, rc.Error()

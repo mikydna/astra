@@ -184,11 +184,11 @@ func GetDepthFrameBuffer(depthFrame DepthFrame) ([]int16, Status) {
 	return buffer, StatusSuccess
 }
 
-func GetDepthFrameMetadata(depthFrame DepthFrame) (uint, uint, Status) {
+func GetDepthFrameMetadata(depthFrame DepthFrame) (int, int, Status) {
 	metadata := new(C.astra_image_metadata_t)
 	if rc := C.astra_depthframe_get_metadata(depthFrame, metadata); Status(rc) != StatusSuccess {
 		return 0, 0, Status(rc)
 	}
 
-	return uint((C.uint)(metadata.width)), uint((C.uint)(metadata.height)), StatusSuccess
+	return int((C.uint)(metadata.width)), int((C.uint)(metadata.height)), StatusSuccess
 }
