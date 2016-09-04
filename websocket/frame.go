@@ -13,16 +13,12 @@ var (
 	ErrInvalidCaptureFrame = errors.New("Invalid capture frame")
 )
 
-type FrameMetadata struct {
+type Frame struct {
 	Timestamp int64 `json:"t"`
 	Index     int   `json:"i"`
 	Width     int   `json:"w"`
 	Height    int   `json:"h"`
-}
-
-type Frame struct {
-	Metadata FrameMetadata `json:"metadata"`
-	Data     []int         `json:"data"`
+	Data      []int `json:"data"`
 }
 
 func FromDepthFrame(c astra.CameraDepthFrame) (*Frame, error) {
@@ -36,13 +32,11 @@ func FromDepthFrame(c astra.CameraDepthFrame) (*Frame, error) {
 	}
 
 	frame := Frame{
-		Metadata: FrameMetadata{
-			Timestamp: time.Now().Unix(),
-			Index:     c.Index,
-			Width:     c.Width,
-			Height:    c.Height,
-		},
-		Data: data,
+		Index:     c.Index,
+		Timestamp: time.Now().Unix(),
+		Width:     c.Width,
+		Height:    c.Height,
+		Data:      data,
 	}
 
 	return &frame, nil

@@ -21,16 +21,16 @@ func TestFromDepthFrame(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if websocketFrame.Metadata.Index != testDepthFrame.Index {
-		t.Errorf("Did not set index correctly: %d != %d", websocketFrame.Metadata.Index, testDepthFrame.Index)
+	if websocketFrame.Index != testDepthFrame.Index {
+		t.Errorf("Did not set index correctly: %d != %d", websocketFrame.Index, testDepthFrame.Index)
 	}
 
-	if websocketFrame.Metadata.Width != testDepthFrame.Width {
-		t.Errorf("Did not set width correctly: %d != %d", websocketFrame.Metadata.Width, testDepthFrame.Width)
+	if websocketFrame.Width != testDepthFrame.Width {
+		t.Errorf("Did not set width correctly: %d != %d", websocketFrame.Width, testDepthFrame.Width)
 	}
 
-	if websocketFrame.Metadata.Height != testDepthFrame.Height {
-		t.Errorf("Did not set height correctly: %d != %d", websocketFrame.Metadata.Height, testDepthFrame.Height)
+	if websocketFrame.Height != testDepthFrame.Height {
+		t.Errorf("Did not set height correctly: %d != %d", websocketFrame.Height, testDepthFrame.Height)
 	}
 
 	if len(websocketFrame.Data) != len(testDepthFrame.Buffer) {

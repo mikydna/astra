@@ -2,44 +2,47 @@ package websocket
 
 import (
 	"testing"
-	"time"
 )
 
 func TestDownsample_4x4(t *testing.T) {
-	index := 0
-	timestamp := time.Now().Unix()
-
-	testFrame := &Frame{
-		Metadata: FrameMetadata{
-			Index:     index,
-			Timestamp: timestamp,
-			Width:     4,
-			Height:    4,
-		},
-		Data: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	frame := &Frame{
+		Index:     0,
+		Timestamp: 1234,
+		Width:     4,
+		Height:    4,
+		Data:      []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 	}
 
-	Downsample(2)(testFrame)
+	expected := &Frame{
+		Index:     0,
+		Timestamp: 1234,
+		Width:     2,
+		Height:    2,
+		Data:      []int{1, 3, 9, 11},
+	}
 
-	if testFrame.Metadata.Index != index {
+	// action
+	Downsample(2)(frame)
+
+	// test
+	if frame.Index != expected.Index {
 		t.Fail()
 	}
 
-	if testFrame.Metadata.Timestamp != timestamp {
+	if frame.Timestamp != expected.Timestamp {
 		t.Fail()
 	}
 
-	if testFrame.Metadata.Width != 2 {
+	if frame.Width != expected.Width {
 		t.Fail()
 	}
 
-	if testFrame.Metadata.Height != 2 {
+	if frame.Height != expected.Height {
 		t.Fail()
 	}
 
-	expectedData := []int{1, 3, 9, 11}
-	for i, val := range testFrame.Data {
-		if expectedData[i] != val {
+	for i, val := range frame.Data {
+		if expected.Data[i] != val {
 			t.Fail()
 		}
 	}
