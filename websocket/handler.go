@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func BroadcastFrames(edge *astra.Edge) http.Handler {
+func BroadcastFrames(edge *astra.Edge, procs ...FrameProcessor) http.Handler {
 	demux := []chan Frame{}
 
 	go func() {
@@ -19,6 +19,10 @@ func BroadcastFrames(edge *astra.Edge) http.Handler {
 			if err != nil {
 				log.Println(err)
 				continue
+			}
+
+			for _, f := range procs {
+				f(frame)
 			}
 
 			for i, out := range demux {

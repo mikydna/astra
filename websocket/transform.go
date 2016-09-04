@@ -1,9 +1,5 @@
 package websocket
 
-import (
-// "log"
-)
-
 type FrameProcessor func(*Frame)
 
 func Downsample(f int) FrameProcessor {

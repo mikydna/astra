@@ -23,7 +23,7 @@ func generateTestCaptureFrames(n, width, height int) []astra.CameraDepthFrame {
 
 		gen[i].Buffer = make([]int16, width*height)
 		for j := 0; j < width*height; j++ {
-			gen[i].Buffer[j] = int16(i * j)
+			gen[i].Buffer[j] = int16((i + 1) * (j + 1))
 		}
 	}
 
@@ -42,7 +42,7 @@ func TestBroadcastFrames(t *testing.T) {
 	}
 
 	// setup socket server
-	http.Handle("/broadcast", BroadcastFrames(fakeEdge))
+	http.Handle("/broadcast", BroadcastFrames(fakeEdge, Downsample(2)))
 	server := httptest.NewServer(nil)
 	addr := server.Listener.Addr().String()
 	defer server.Close()
@@ -54,7 +54,7 @@ func TestBroadcastFrames(t *testing.T) {
 		t.Fail()
 	}
 
-	// start edge, sending fake frames
+	// send fake frames
 	go func() {
 		for _, sendFrame := range testDepthFrames {
 			time.Sleep(time.Duration(sleep) * time.Millisecond)
@@ -71,6 +71,6 @@ func TestBroadcastFrames(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		t.Logf("Received frame, index=%d", received.Index)
+		t.Logf("Received frame, index=%d, len=%d", received.Index, len(received.Data))
 	}
 }
