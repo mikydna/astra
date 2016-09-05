@@ -42,7 +42,7 @@ func TestBroadcastFrames(t *testing.T) {
 	}
 
 	// setup socket server
-	http.Handle("/broadcast", BroadcastFrames(fakeEdge, Downsample(2)))
+	http.Handle("/broadcast", BroadcastFrames(fakeEdge.Depth, Downsample(2)))
 	server := httptest.NewServer(nil)
 	addr := server.Listener.Addr().String()
 	defer server.Close()

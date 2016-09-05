@@ -3,8 +3,8 @@ package astra
 // fix: C-FLAGS with  ENV vars?
 
 /*
-#cgo CFLAGS: -I/Users/andy/Desktop/AstraSDK-0.5.0-20160426T102621Z-darwin-x64/include
-#cgo LDFLAGS: -Wl,-rpath,/Users/andy/Desktop/AstraSDK-0.5.0-20160426T102621Z-darwin-x64/lib -lastra -lastra_core -lastra_core_api
+#cgo CFLAGS: -I/usr/local/include/libastra-0.5
+#cgo LDFLAGS: -lastra -lastra_core -lastra_core_api
 #include <stdlib.h>
 #include <astra/capi/astra.h>
 */

@@ -10,11 +10,11 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func BroadcastFrames(edge *astra.Edge, procs ...FrameProcessor) http.Handler {
+func BroadcastFrames(in <-chan astra.CameraDepthFrame, procs ...FrameProcessor) http.Handler {
 	demux := []chan Frame{}
 
 	go func() {
-		for capture := range edge.Depth {
+		for capture := range in {
 			frame, err := FromDepthFrame(capture)
 			if err != nil {
 				log.Println(err)

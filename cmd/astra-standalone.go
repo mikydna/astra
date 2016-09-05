@@ -34,7 +34,7 @@ func main() {
 	mux := http.NewServeMux()
 	server := &http.Server{Addr: ":9091", Handler: mux}
 
-	mux.Handle("/depth", websocket.BroadcastFrames(edge, websocket.Downsample(8)))
+	mux.Handle("/depth", websocket.BroadcastFrames(edge.Depth, websocket.Downsample(8)))
 
 	graceful, err := httpConf.ListenAndServe(server)
 	if err != nil {
