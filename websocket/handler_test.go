@@ -35,14 +35,10 @@ func TestBroadcastFrames(t *testing.T) {
 	n := 10
 	sleep := 250 // ms
 	testDepthFrames := generateTestCaptureFrames(n, 4, 4)
-
-	// setup edge
-	fakeEdge := &astra.Edge{
-		Depth: make(chan astra.CameraDepthFrame),
-	}
+	fakeEdgeDepth := make(chan astra.CameraDepthFrame)
 
 	// setup socket server
-	http.Handle("/broadcast", BroadcastFrames(fakeEdge.Depth, Downsample(2)))
+	http.Handle("/broadcast", BroadcastFrames(fakeEdgeDepth, Downsample(2)))
 	server := httptest.NewServer(nil)
 	addr := server.Listener.Addr().String()
 	defer server.Close()
@@ -58,7 +54,7 @@ func TestBroadcastFrames(t *testing.T) {
 	go func() {
 		for _, sendFrame := range testDepthFrames {
 			time.Sleep(time.Duration(sleep) * time.Millisecond)
-			fakeEdge.Depth <- sendFrame
+			fakeEdgeDepth <- sendFrame
 		}
 	}()
 
