@@ -21,8 +21,10 @@ var (
 )
 
 func main() {
-	preview.Foo()
 	done := make(chan bool)
+
+	// tool/preview stub
+	preview.Launch()
 
 	// initialize cameras
 	cameras := []string{"device/default"}
