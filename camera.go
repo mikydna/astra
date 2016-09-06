@@ -9,7 +9,7 @@ var (
 	DefaultStreamConf = CameraStreamConf{
 		1000 * time.Millisecond,
 		// ^^^ fix: initialization crutch
-		5000 * time.Millisecond,
+		100 * time.Millisecond,
 	}
 )
 
@@ -103,8 +103,10 @@ func (c *Camera) PollStream(conf CameraStreamConf) {
 					}
 
 					CloseReaderFrame(newFrame)
+
 				} else {
-					log.Println("Open failed? ", rc)
+					// log.Println("Open failed? ", rc)
+
 				}
 
 			} else {

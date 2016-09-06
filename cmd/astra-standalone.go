@@ -9,7 +9,6 @@ import (
 import (
 	"github.com/facebookgo/httpdown"
 	"github.com/mikydna/astra"
-	// "github.com/mikydna/astra/tool/preview"
 	"github.com/mikydna/astra/websocket"
 )
 
@@ -22,9 +21,6 @@ var (
 
 func main() {
 	done := make(chan bool)
-
-	// tool/preview stub
-	// preview.Launch()
 
 	// initialize cameras
 	cameras := []string{"device/default"}

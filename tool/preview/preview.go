@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"image/draw"
 	"log"
-	"math/rand"
+	// "math/rand"
 	"time"
 )
 
@@ -19,14 +19,22 @@ import (
 
 const (
 	FPS_1  = 1000 * time.Millisecond
+	FPS_10 = 100 * time.Millisecond
+	FPS_20 = 50 * time.Millisecond
+	FPS_30 = 33 * time.Millisecond
 	FPS_60 = 16 * time.Millisecond
 )
 
-func Launch() {
-	mult := 3
-	scale := 16
-	width := 640 / scale
-	height := 480 / scale
+type Conf struct {
+	Mult, Scale   int
+	Width, Height int
+}
+
+func Launch(conf Conf, frames [][]int) {
+	mult := conf.Mult
+	scale := conf.Scale
+	width := conf.Width / scale
+	height := conf.Height / scale
 
 	driver.Main(func(s screen.Screen) {
 		size := image.Point{width, height}
@@ -50,16 +58,14 @@ func Launch() {
 		defer tex.Release()
 
 		go func() {
-			mat := make([]int, width*height)
-			for i, _ := range mat {
-				mat[i] = i
-			}
 
-			ticker := time.NewTicker(FPS_1)
+			ticker := time.NewTicker(FPS_10)
 
 			for i := 0; true; i++ {
 				select {
 				case <-ticker.C:
+					mat := frames[i%len(frames)]
+
 					drawDepth(buf.RGBA(), mat)
 					tex.Upload(image.Point{}, buf, buf.Bounds())
 
@@ -97,6 +103,7 @@ func Launch() {
 		}
 
 	})
+
 }
 
 func drawDepth(m *image.RGBA, mat []int) {
@@ -111,11 +118,11 @@ func drawDepth(m *image.RGBA, mat []int) {
 		for c := 0; c < width; c++ {
 			x := bounds.Min.X + c
 			y := bounds.Min.Y + r
-			val := float32(mat[r*width+c]) / float32(len(mat))
+			val := float32(mat[r*width+c]) / float32(10000)
 
 			m.SetRGBA(x, y, color.RGBA{
 				uint8(val * 0xff),
-				uint8((rand.Float32() * 0xff)),
+				0x00,
 				0x00, // uint8((rand.Float32() * 0xff)),
 				0xff,
 			})
