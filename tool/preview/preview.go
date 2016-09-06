@@ -14,7 +14,6 @@ import (
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
-	// "golang.org/x/mobile/event/paint"
 )
 
 const (
@@ -151,7 +150,7 @@ func drawDepth(m *image.RGBA, frame []int16) {
 		for c := 0; c < width; c++ {
 			x := bounds.Min.X + c
 			y := bounds.Min.Y + r
-			val := (float32(frame[r*width+c]) / float32(10000))
+			val := (float32(frame[r*width+c]) / float32(5000))
 
 			m.SetRGBA(x, y, color.RGBA{
 				uint8(val * 0xff),
