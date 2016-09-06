@@ -8,11 +8,9 @@ func Downsample(f int) FrameProcessor {
 		height := frame.Height / f
 		data := make([]int, width*height)
 
-		i := 0
-		for r := 0; r <= height; r += f {
-			for c := 0; c <= width; c += f {
-				data[i] = int(frame.Data[r*frame.Width+c])
-				i += 1
+		for r := 0; r < height; r++ {
+			for c := 0; c < width; c++ {
+				data[r*width+c] = int(frame.Data[(r*f*frame.Width)+(c*f)])
 			}
 		}
 

@@ -83,6 +83,7 @@ func (e *Edge) Start() error {
 				select {
 				case frame := <-stream:
 					e.Depth <- frame
+
 				default:
 					// nothing heard
 				}

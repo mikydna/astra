@@ -1,9 +1,9 @@
 package preview
 
 import (
-	// "fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"log"
 	"math/rand"
 	"time"
@@ -17,14 +17,21 @@ import (
 	"golang.org/x/mobile/event/paint"
 )
 
+const (
+	FPS_1  = 1000 * time.Millisecond
+	FPS_60 = 16 * time.Millisecond
+)
+
 func Launch() {
-	width := 640
-	height := 480
+	mult := 3
+	scale := 16
+	width := 640 / scale
+	height := 480 / scale
 
 	driver.Main(func(s screen.Screen) {
 		size := image.Point{width, height}
 
-		win, err := s.NewWindow(&screen.NewWindowOptions{width, height})
+		win, err := s.NewWindow(&screen.NewWindowOptions{mult * scale * width, mult * scale * height})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -36,20 +43,33 @@ func Launch() {
 		}
 		defer buf.Release()
 
-		// tex, err := s.NewTexture(size)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// defer tex.Release()
+		tex, err := s.NewTexture(size)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer tex.Release()
 
 		go func() {
-			ticker := time.NewTicker(100 * time.Millisecond)
+			mat := make([]int, width*height)
+			for i, _ := range mat {
+				mat[i] = i
+			}
+
+			ticker := time.NewTicker(FPS_1)
 
 			for i := 0; true; i++ {
 				select {
 				case <-ticker.C:
-					drawDepth(buf.RGBA(), []int{})
-					win.Upload(image.Point{}, buf, buf.Bounds())
+					drawDepth(buf.RGBA(), mat)
+					tex.Upload(image.Point{}, buf, buf.Bounds())
+
+					win.Scale(
+						image.Rectangle{
+							image.Point{0, 0},
+							image.Point{mult * scale * width, mult * scale * height},
+						},
+						tex, tex.Bounds(), screen.Src, nil)
+
 					win.Publish()
 				}
 			}
@@ -81,14 +101,25 @@ func Launch() {
 
 func drawDepth(m *image.RGBA, mat []int) {
 	bounds := m.Bounds()
+	width := bounds.Max.X - bounds.Min.X
+	height := bounds.Max.Y - bounds.Min.Y
 
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	blue := color.RGBA{0, 0, 255, 255}
+	draw.Draw(m, m.Bounds(), &image.Uniform{blue}, image.ZP, draw.Src)
+
+	for r := 0; r < height; r++ {
+		for c := 0; c < width; c++ {
+			x := bounds.Min.X + c
+			y := bounds.Min.Y + r
+			val := float32(mat[r*width+c]) / float32(len(mat))
+
 			m.SetRGBA(x, y, color.RGBA{
+				uint8(val * 0xff),
 				uint8((rand.Float32() * 0xff)),
-				uint8((rand.Float32() * 0xff)),
-				uint8((rand.Float32() * 0xff)),
-				0xff})
+				0x00, // uint8((rand.Float32() * 0xff)),
+				0xff,
+			})
+
 		}
 	}
 

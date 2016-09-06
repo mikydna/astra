@@ -38,7 +38,7 @@ func TestBroadcastFrames(t *testing.T) {
 	fakeEdgeDepth := make(chan astra.CameraDepthFrame)
 
 	// setup socket server
-	http.Handle("/broadcast", BroadcastFrames(fakeEdgeDepth, Downsample(2)))
+	http.Handle("/broadcast", BroadcastFrames(fakeEdgeDepth, Downsample(4)))
 	server := httptest.NewServer(nil)
 	addr := server.Listener.Addr().String()
 	defer server.Close()

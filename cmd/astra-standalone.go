@@ -9,7 +9,7 @@ import (
 import (
 	"github.com/facebookgo/httpdown"
 	"github.com/mikydna/astra"
-	"github.com/mikydna/astra/tool/preview"
+	// "github.com/mikydna/astra/tool/preview"
 	"github.com/mikydna/astra/websocket"
 )
 
@@ -24,7 +24,7 @@ func main() {
 	done := make(chan bool)
 
 	// tool/preview stub
-	preview.Launch()
+	// preview.Launch()
 
 	// initialize cameras
 	cameras := []string{"device/default"}
@@ -36,9 +36,9 @@ func main() {
 
 	// web server
 	mux := http.NewServeMux()
-	server := &http.Server{Addr: ":9091", Handler: mux}
+	mux.Handle("/depth", websocket.BroadcastFrames(edge.Depth, websocket.Downsample(4)))
 
-	mux.Handle("/depth", websocket.BroadcastFrames(edge.Depth, websocket.Downsample(8)))
+	server := &http.Server{Addr: ":9091", Handler: mux}
 
 	graceful, err := httpConf.ListenAndServe(server)
 	if err != nil {

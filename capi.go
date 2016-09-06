@@ -1,10 +1,11 @@
 package astra
 
 // fix: C-FLAGS with  ENV vars?
+// note: need to rpath all the astra libs?
 
 /*
 #cgo CFLAGS: -I/usr/local/include/libastra-0.5
-#cgo LDFLAGS: -lastra -lastra_core -lastra_core_api
+#cgo LDFLAGS: -Wl,-rpath,/Users/andy/Code/vendor/AstraSDK-0.5.0-20160426T102621Z-darwin-x64/lib -lastra -lastra_core -lastra_core_api
 #include <stdlib.h>
 #include <astra/capi/astra.h>
 */
