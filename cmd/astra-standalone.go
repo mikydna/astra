@@ -9,6 +9,7 @@ import (
 import (
 	"github.com/facebookgo/httpdown"
 	"github.com/mikydna/astra"
+	"github.com/mikydna/astra/tool/preview"
 	"github.com/mikydna/astra/websocket"
 )
 
@@ -32,7 +33,8 @@ func main() {
 
 	// web server
 	mux := http.NewServeMux()
-	mux.Handle("/depth", websocket.BroadcastFrames(edge.Depth, websocket.Downsample(4)))
+
+	mux.Handle("/depth", websocket.BroadcastFrames(edge.Depth, astra.Downsample(4)))
 
 	server := &http.Server{Addr: ":9091", Handler: mux}
 
@@ -44,6 +46,10 @@ func main() {
 
 	// start
 	go edge.Start()
+
+	// tools
+	prerecorded, _ := preview.LoadJSON("/Users/andy/Desktop/capture/astra-*.json")
+	preview.Launch(preview.Conf{1, 640, 480}, prerecorded)
 
 	<-done
 }

@@ -3,10 +3,8 @@ package preview
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 )
@@ -15,51 +13,25 @@ import (
 	"github.com/mikydna/astra"
 )
 
-func init() {
-	runtime.LockOSThread()
-}
+func TestPreview(t *testing.T) {
+	prerecorded, _ := LoadJSON("/Users/andy/Desktop/capture/astra-*.json")
+	t.Log(len(prerecorded))
 
-func fromDir(glob string) ([][]int, error) {
-	files, err := filepath.Glob(glob)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Println(files)
-
-	frames := [][]int{}
-	for _, file := range files {
-		b, err := ioutil.ReadFile(file)
-		if err != nil {
-			return nil, err
-		}
-
-		frame := astra.CameraDepthFrame{}
-		if err := json.Unmarshal(b, &frame); err != nil {
-			return nil, err
-		}
-
-		data := make([]int, len(frame.Buffer))
-		for j, val := range frame.Buffer {
-			data[j] = int(val)
-		}
-
-		frames = append(frames, data)
-	}
-
-	return frames, nil
+	Launch(Conf{1, 640, 320}, prerecorded)
 }
 
 func TestMain(m *testing.M) {
-	frames, err := fromDir("/Users/andy/Desktop/capture/astra-*.json")
-	if err != nil {
-		return
-	}
 
 	go func() {
+		prerecorded, _ := LoadJSON("/Users/andy/Desktop/capture/astra-*.json")
+		// m.Log(len(prerecorded))
+
+		Launch(Conf{1, 640, 320}, prerecorded)
+
+		m.Run()
 		<-time.After(15 * time.Second)
-		os.Exit(m.Run())
+		os.Exit(0)
+
 	}()
 
-	Launch(Conf{2, 1, 640, 480}, frames)
 }
